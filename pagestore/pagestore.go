@@ -4,7 +4,9 @@ import (
 	"encoding/binary"
 	"fmt"
 	"math"
+	"time"
 
+	"bench-pagestore/monitor"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/errors"
 	"github.com/syndtr/goleveldb/leveldb/filter"
@@ -95,6 +97,10 @@ func (ps *PageStore) Put(id *PageID, page *PageData) error {
 	if ps.db == nil {
 		return fmt.Errorf("failed to put page due to page store db is nil")
 	}
+	start := time.Now()
+	defer func() {
+		monitor.RecordWriteDuration(time.Now().Sub(start))
+	}()
 	return ps.db.Put(id.encode(), page.encode(), nil)
 }
 
@@ -105,6 +111,10 @@ func (ps *PageStore) Get(id *PageID) (*PageData, error) {
 	if ps.db == nil {
 		return nil, fmt.Errorf("failed to get page due to page store db is nil")
 	}
+	start := time.Now()
+	defer func() {
+		monitor.RecordReadDuration(time.Now().Sub(start))
+	}()
 	rawData, err := ps.db.Get(id.encode(), nil)
 	return &PageData{rawData: rawData}, err
 }
