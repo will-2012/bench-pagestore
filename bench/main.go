@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"bench-pagestore/monitor"
 	"bench-pagestore/pagestore"
 	"github.com/urfave/cli/v2"
 )
@@ -48,7 +49,7 @@ func main() {
 }
 
 func benchMain(c *cli.Context) error {
-	// init
+	monitor.Init()
 	ch := make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGTERM, syscall.SIGINT, os.Interrupt, os.Kill, syscall.SIGUSR1, syscall.SIGUSR2)
 
