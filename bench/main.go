@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"bench-pagestore/monitor"
 	"bench-pagestore/pagestore"
@@ -173,6 +174,7 @@ func (rWorker *ReadWorker) Start() {
 					fmt.Printf("Break loop due to get failed, error=%v\n", err)
 					fmt.Println("End bench read")
 				}
+				time.Sleep(100 * time.Millisecond)
 			}
 		}
 	}()
