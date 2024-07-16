@@ -82,6 +82,7 @@ func benchWrite(ch chan os.Signal) error {
 	}
 	wGenerator = &utils.BenchWriteGenerator{}
 	wGenerator.Init()
+	writeQPSControler = &utils.QPSController{}
 	writeQPSControler.Init(10000) /*1w qps*/
 
 	for {
