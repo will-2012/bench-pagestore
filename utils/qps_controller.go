@@ -19,7 +19,7 @@ func (c *QPSController) Init(qps uint64) {
 	}
 	// 1 second = 1000000us
 	limit := rate.Every(time.Duration(1000000.0/qps) * time.Microsecond)
-	c.tokenBucket = rate.NewLimiter(limit, 1000)
+	c.tokenBucket = rate.NewLimiter(limit*2, 100)
 }
 
 func (c *QPSController) TakeToken() {
