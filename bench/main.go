@@ -27,9 +27,17 @@ func main() {
 				Name:  "write",
 				Usage: "bench page store write",
 			},
+			&cli.Uint64Flag{
+				Name:  "write-qps",
+				Usage: "bench page store write qps",
+			},
 			&cli.BoolFlag{
 				Name:  "read",
 				Usage: "bench page store read",
+			},
+			&cli.Uint64Flag{
+				Name:  "read-qps",
+				Usage: "bench page store read qps",
 			},
 			&cli.BoolFlag{
 				Name:  "mix",
@@ -74,29 +82,29 @@ func benchMain(c *cli.Context) error {
 	defer pageStore.Close()
 
 	if c.Bool("write") {
-		writeQPSControler := &utils.QPSController{}
-		writeQPSControler.Init(15000) /*1.5w qps*/
-		return benchWrite(ch, pageStore, writeQPSControler)
+		writeQPSController := &utils.QPSController{}
+		writeQPSController.Init(c.Uint64("write-qps"))
+		return benchWrite(ch, pageStore, writeQPSController)
 	}
 	if c.Bool("read") {
-		readQPSControler := &utils.QPSController{}
-		readQPSControler.Init(10000) /*1w qps*/
-		return benchRead(ch, pageStore, readQPSControler, c.Uint64("read-start"), c.Uint64("read-end"))
+		readQPSController := &utils.QPSController{}
+		readQPSController.Init(c.Uint64("read-qps"))
+		return benchRead(ch, pageStore, readQPSController, c.Uint64("read-start"), c.Uint64("read-end"))
 	}
 	if c.Bool("mix") {
 		wg := sync.WaitGroup{}
 		wg.Add(2)
 
 		go func() {
-			readQPSControler := &utils.QPSController{}
-			readQPSControler.Init(1000) /*1k qps*/
-			benchRead(ch, pageStore, readQPSControler, c.Uint64("read-start"), c.Uint64("read-end"))
+			readQPSController := &utils.QPSController{}
+			readQPSController.Init(c.Uint64("read-qps"))
+			benchRead(ch, pageStore, readQPSController, c.Uint64("read-start"), c.Uint64("read-end"))
 			wg.Done()
 		}()
 		go func() {
-			writeQPSControler := &utils.QPSController{}
-			writeQPSControler.Init(10000) /*1w qps*/
-			benchWrite(ch, pageStore, writeQPSControler)
+			writeQPSController := &utils.QPSController{}
+			writeQPSController.Init(c.Uint64("write-qps"))
+			benchWrite(ch, pageStore, writeQPSController)
 			wg.Done()
 		}()
 
