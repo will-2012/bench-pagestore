@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	readWorkerNumber = 10
+	readWorkerNumber = 1
 )
 
 func main() {
