@@ -18,9 +18,9 @@ const (
 )
 
 type PageID struct {
-	version uint64
-	trieID  Hash // trie owner's hash.
-	path    []byte
+	Version uint64
+	TrieID  Hash // trie owner's hash.
+	Path    []byte
 }
 
 func (id *PageID) encode() []byte {
@@ -28,26 +28,26 @@ func (id *PageID) encode() []byte {
 		return nil
 	}
 	enc := make([]byte, 8)
-	binary.BigEndian.PutUint64(enc, id.version)
-	return append(append(enc, id.trieID[:]...), id.path...)
+	binary.BigEndian.PutUint64(enc, id.Version)
+	return append(append(enc, id.TrieID[:]...), id.Path...)
 }
 
-func (id *PageID) Version() uint64 {
-	if id == nil {
-		return 0
-	}
-	return id.version
-}
+//func (id *PageID) Version() uint64 {
+//	if id == nil {
+//		return 0
+//	}
+//	return id.Version
+//}
 
 type PageData struct {
-	rawData []byte
+	RawData []byte
 }
 
 func (data *PageData) encode() []byte {
 	if data == nil {
 		return nil
 	}
-	return data.rawData
+	return data.RawData
 }
 
 type PageStore struct {
@@ -116,5 +116,5 @@ func (ps *PageStore) Get(id *PageID) (*PageData, error) {
 		monitor.RecordReadDuration(time.Now().Sub(start))
 	}()
 	rawData, err := ps.db.Get(id.encode(), nil)
-	return &PageData{rawData: rawData}, err
+	return &PageData{RawData: rawData}, err
 }
