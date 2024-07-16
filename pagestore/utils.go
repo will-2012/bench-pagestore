@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	defaultRandDataNum = 20
+	defaultRandDataNum = 50
 )
 
 // BenchWriteGenerator is used by single write thread to ensure PageID is monotonically increasing.
@@ -23,7 +23,7 @@ func (wGen *BenchWriteGenerator) Init() {
 	}
 	rand.Seed(time.Now().UnixNano())
 	wGen.randDataPool = make([][]byte, defaultRandDataNum)
-	delta := (5*1024 - 3*1024) / defaultRandDataNum
+	delta := (60*1024 - 10*1024) / defaultRandDataNum
 	for i := 0; i < defaultRandDataNum; i++ {
 		dataSize := 3*1024 + delta*i
 		bytes := make([]byte, dataSize)

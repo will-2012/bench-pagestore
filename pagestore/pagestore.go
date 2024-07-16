@@ -60,6 +60,7 @@ func Open() (*PageStore, error) {
 	dbOpts.OpenFilesCacheCapacity = 81920
 	dbOpts.BlockCacheCapacity = 2 * 1024 * 1024 * 1024 // 2GiB
 	dbOpts.Filter = filter.NewBloomFilter(10)
+	dbOpts.BlockSize = 256 * 1024 // 256KiB
 
 	// the leveldb only has l0 level.
 	dbOpts.CompactionL0Trigger = math.MaxInt
