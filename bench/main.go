@@ -55,19 +55,33 @@ func main() {
 }
 
 func benchMain(c *cli.Context) error {
-	monitor.Init()
-	ch := make(chan os.Signal, 1)
+	var (
+		ch        chan os.Signal
+		pageStore *pagestore.PageStore
+		err       error
+	)
+
+	ch = make(chan os.Signal, 1)
 	signal.Notify(ch, syscall.SIGTERM, syscall.SIGINT, os.Interrupt, os.Kill, syscall.SIGUSR1, syscall.SIGUSR2)
+
+	monitor.Init()
+
+	if pageStore, err = pagestore.Open(); err != nil {
+		fmt.Printf("Failed to open page store due to error=%v\n", err)
+		return err
+	}
+
+	defer pageStore.Close()
 
 	if c.Bool("write") {
 		writeQPSControler := &utils.QPSController{}
 		writeQPSControler.Init(15000) /*1.5w qps*/
-		return benchWrite(ch, writeQPSControler)
+		return benchWrite(ch, pageStore, writeQPSControler)
 	}
 	if c.Bool("read") {
 		readQPSControler := &utils.QPSController{}
 		readQPSControler.Init(10000) /*1w qps*/
-		return benchRead(ch, readQPSControler, c.Uint64("read-start"), c.Uint64("read-end"))
+		return benchRead(ch, pageStore, readQPSControler, c.Uint64("read-start"), c.Uint64("read-end"))
 	}
 	if c.Bool("mix") {
 		wg := sync.WaitGroup{}
@@ -76,13 +90,13 @@ func benchMain(c *cli.Context) error {
 		go func() {
 			readQPSControler := &utils.QPSController{}
 			readQPSControler.Init(1000) /*1k qps*/
-			benchRead(ch, readQPSControler, c.Uint64("read-start"), c.Uint64("read-end"))
+			benchRead(ch, pageStore, readQPSControler, c.Uint64("read-start"), c.Uint64("read-end"))
 			wg.Done()
 		}()
 		go func() {
 			writeQPSControler := &utils.QPSController{}
 			writeQPSControler.Init(10000) /*1w qps*/
-			benchWrite(ch, writeQPSControler)
+			benchWrite(ch, pageStore, writeQPSControler)
 			wg.Done()
 		}()
 
@@ -94,21 +108,16 @@ func benchMain(c *cli.Context) error {
 	return nil
 }
 
-func benchWrite(ch chan os.Signal, controller *utils.QPSController) error {
+func benchWrite(ch chan os.Signal, pageStore *pagestore.PageStore, controller *utils.QPSController) error {
 	fmt.Println("Start bench write")
 
 	var (
-		pageStore   *pagestore.PageStore
 		err         error
 		wGenerator  *utils.BenchWriteGenerator
 		curPageID   *pagestore.PageID
 		curPageData *pagestore.PageData
 	)
 
-	if pageStore, err = pagestore.Open(); err != nil {
-		fmt.Printf("Failed to open page store due to error=%v\n", err)
-		return err
-	}
 	wGenerator = &utils.BenchWriteGenerator{}
 	wGenerator.Init()
 
@@ -131,18 +140,13 @@ func benchWrite(ch chan os.Signal, controller *utils.QPSController) error {
 
 }
 
-func benchRead(ch chan os.Signal, controller *utils.QPSController, start uint64, end uint64) error {
+func benchRead(ch chan os.Signal, pageStore *pagestore.PageStore, controller *utils.QPSController, start uint64, end uint64) error {
 	fmt.Println("Start bench read")
 
 	var (
-		pageStore   *pagestore.PageStore
-		err         error
 		readWorkers []*ReadWorker
 	)
-	if pageStore, err = pagestore.Open(); err != nil {
-		fmt.Printf("Failed to open page store due to error=%v\n", err)
-		return err
-	}
+
 	readWorkers = make([]*ReadWorker, readWorkerNumber)
 
 	for index := uint64(0); index < readWorkerNumber; index++ {
@@ -164,7 +168,6 @@ func benchRead(ch chan os.Signal, controller *utils.QPSController, start uint64,
 		for index := uint64(0); index < readWorkerNumber; index++ {
 			readWorkers[index].Stop()
 		}
-		pageStore.Close()
 		fmt.Println("End bench read")
 		return nil
 	}
