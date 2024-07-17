@@ -14,12 +14,12 @@ const (
 
 // BenchWriteGenerator is used by single write thread to ensure PageID is monotonically increasing.
 type BenchWriteGenerator struct {
-	lock           sync.RWMutex
-	currentVersion uint64
-	randDataPool   [][]byte
+	lock         sync.RWMutex
+	startVersion uint64
+	randDataPool [][]byte
 }
 
-func (wGen *BenchWriteGenerator) Init() {
+func (wGen *BenchWriteGenerator) Init(start uint64) {
 	if wGen == nil {
 		return
 	}
@@ -32,7 +32,7 @@ func (wGen *BenchWriteGenerator) Init() {
 		rand.Read(bytes)
 		wGen.randDataPool[i] = bytes /*3k ~ 5k*/
 	}
-	wGen.currentVersion = 0
+	wGen.startVersion = start
 }
 
 func (wGen *BenchWriteGenerator) Generate() (*pagestore.PageID, *pagestore.PageData) {
@@ -43,11 +43,11 @@ func (wGen *BenchWriteGenerator) Generate() (*pagestore.PageID, *pagestore.PageD
 	wGen.lock.Lock()
 	defer wGen.lock.Unlock()
 
-	wGen.currentVersion = wGen.currentVersion + 1
+	wGen.startVersion = wGen.startVersion + 1
 	index := rand.Intn(defaultRandDataNum)
 
 	return &pagestore.PageID{
-		Version: wGen.currentVersion,
+		Version: wGen.startVersion,
 		TrieID:  pagestore.Hash{},
 		Path:    nil,
 	}, &pagestore.PageData{RawData: wGen.randDataPool[index]}

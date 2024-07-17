@@ -31,6 +31,10 @@ func main() {
 				Name:  "write-qps",
 				Usage: "bench page store write qps",
 			},
+			&cli.Uint64Flag{
+				Name:  "write-start",
+				Usage: "write range from start",
+			},
 			&cli.BoolFlag{
 				Name:  "read",
 				Usage: "bench page store read",
@@ -39,10 +43,6 @@ func main() {
 				Name:  "read-qps",
 				Usage: "bench page store read qps",
 			},
-			&cli.BoolFlag{
-				Name:  "mix",
-				Usage: "bench page store write/read",
-			},
 			&cli.Uint64Flag{
 				Name:  "read-start",
 				Usage: "read range from start",
@@ -50,6 +50,10 @@ func main() {
 			&cli.Uint64Flag{
 				Name:  "read-end",
 				Usage: "read range to end",
+			},
+			&cli.BoolFlag{
+				Name:  "mix",
+				Usage: "bench page store write/read",
 			},
 		},
 
@@ -84,7 +88,7 @@ func benchMain(c *cli.Context) error {
 	if c.Bool("write") {
 		writeQPSController := &utils.QPSController{}
 		writeQPSController.Init(c.Uint64("write-qps"))
-		return benchWrite(ch, pageStore, writeQPSController)
+		return benchWrite(ch, pageStore, writeQPSController, c.Uint64("write-start"))
 	}
 	if c.Bool("read") {
 		readQPSController := &utils.QPSController{}
@@ -104,7 +108,7 @@ func benchMain(c *cli.Context) error {
 		go func() {
 			writeQPSController := &utils.QPSController{}
 			writeQPSController.Init(c.Uint64("write-qps"))
-			benchWrite(ch, pageStore, writeQPSController)
+			benchWrite(ch, pageStore, writeQPSController, c.Uint64("write-start"))
 			wg.Done()
 		}()
 
@@ -116,7 +120,7 @@ func benchMain(c *cli.Context) error {
 	return nil
 }
 
-func benchWrite(ch chan os.Signal, pageStore *pagestore.PageStore, controller *utils.QPSController) error {
+func benchWrite(ch chan os.Signal, pageStore *pagestore.PageStore, controller *utils.QPSController, start uint64) error {
 	fmt.Println("Start bench write")
 
 	var (
@@ -127,7 +131,7 @@ func benchWrite(ch chan os.Signal, pageStore *pagestore.PageStore, controller *u
 	)
 
 	wGenerator = &utils.BenchWriteGenerator{}
-	wGenerator.Init()
+	wGenerator.Init(start)
 
 	for {
 		select {

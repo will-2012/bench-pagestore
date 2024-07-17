@@ -11,7 +11,7 @@ make build
 ./bench/bench --write --write-qps 15000
 
 # bench read
-./bench/bench --read --read-qps 2000 --read-start 1 --read-end 15336898
+./bench/bench --read --read-qps 3000 --read-start 1 --read-end 15336898
 
 # bench mix read/write
 ./bench/bench --mix --write-qps 1000 --read-qps 1000 --read-start 1 --read-end 15336898

@@ -52,10 +52,10 @@ func Open() (*PageStore, error) {
 
 	// 1.It should be smaller than the disk bandwidth to avoid IO jitter caused by flushing memtable.
 	// 2.Avoid too many keys causing filterblock to be too large, which affects read performance.
-	dbOpts.WriteBuffer = 512 * 1024 * 1024 // 512MiB
+	dbOpts.WriteBuffer = 256 * 1024 * 1024 // 256MiB
 
 	// Is a relatively large value, full memory cache all file handles.
-	dbOpts.OpenFilesCacheCapacity = 81920 // db-size = 81920 * 512MiB = 4TiB
+	dbOpts.OpenFilesCacheCapacity = 81920 // db-size = 81920 * 256MiB = 2TiB
 
 	// Adjust according to the actual memory of the physical machine.
 	dbOpts.BlockCacheCapacity = 2 * 1024 * 1024 * 1024 // 2GiB
