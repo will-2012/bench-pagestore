@@ -64,12 +64,12 @@ func Open() (*PageStore, error) {
 	dbOpts.Filter = filter.NewBloomFilter(10)
 
 	// avg_kv_size = 35KiB, one block should include tens of kv.
-	dbOpts.BlockSize = 512 * 1024 // 512KiB
+	dbOpts.BlockSize = 128 * 1024 // 128KiB
 
 	// one block should include several restart point.
-	dbOpts.BlockRestartInterval = 2
+	dbOpts.BlockRestartInterval = 4
 
-	// the leveldb only has l0 level.
+	// the leveldb only has l0 level and no major compact.
 	dbOpts.CompactionL0Trigger = math.MaxInt
 	dbOpts.WriteL0SlowdownTrigger = math.MaxInt
 	dbOpts.WriteL0PauseTrigger = math.MaxInt
