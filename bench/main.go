@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	readWorkerNumber = 20
+	readWorkerNumber = 50
 )
 
 func main() {

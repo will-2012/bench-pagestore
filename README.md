@@ -8,10 +8,13 @@ make build
 ## Bench
 ```shell
 # bench write
-./bench/bench --write
+./bench/bench --write --write-qps 15000
 
 # bench read
-./bench/bench --read --read-start 10 --read-end 100
+./bench/bench --read --read-qps 10000 --read-start 1 --read-end 15336898
+
+# bench mix read/write
+./bench/bench --mix --write-qps 10000 --read-qps 1000 --read-start 1 --read-end 15336898
 ```
 
 ## Monitor
