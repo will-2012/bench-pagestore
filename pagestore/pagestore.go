@@ -49,11 +49,25 @@ type PageStore struct {
 
 func Open() (*PageStore, error) {
 	dbOpts := &opt.Options{}
-	dbOpts.WriteBuffer = 1 * 1024 * 1024 * 1024 // 1GiB
-	dbOpts.OpenFilesCacheCapacity = 81920
+
+	// 1.It should be smaller than the disk bandwidth to avoid IO jitter caused by flushing memtable.
+	// 2.Avoid too many keys causing filterblock to be too large, which affects read performance.
+	dbOpts.WriteBuffer = 512 * 1024 * 1024 // 512MiB
+
+	// Is a relatively large value, full memory cache all file handles.
+	dbOpts.OpenFilesCacheCapacity = 81920 // db-size = 81920 * 512MiB = 4TiB
+
+	// Adjust according to the actual memory of the physical machine.
 	dbOpts.BlockCacheCapacity = 2 * 1024 * 1024 * 1024 // 2GiB
+
+	// 10bits bloomfilter is a good tradeoff.
 	dbOpts.Filter = filter.NewBloomFilter(10)
-	dbOpts.BlockSize = 256 * 1024 // 256KiB
+
+	// avg_kv_size = 35KiB, one block should include tens of kv.
+	dbOpts.BlockSize = 512 * 1024 // 512KiB
+
+	// one block should include several restart point.
+	dbOpts.BlockRestartInterval = 2
 
 	// the leveldb only has l0 level.
 	dbOpts.CompactionL0Trigger = math.MaxInt
