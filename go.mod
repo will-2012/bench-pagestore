@@ -23,4 +23,4 @@ require (
 	google.golang.org/protobuf v1.33.0 // indirect
 )
 
-replace github.com/syndtr/goleveldb => github.com/will-2012/goleveldb v0.0.0-20240716075012-3803885caf34
+// replace github.com/syndtr/goleveldb => github.com/will-2012/goleveldb v0.0.0-20240716075012-3803885caf34
