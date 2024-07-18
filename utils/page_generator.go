@@ -55,11 +55,16 @@ func (wGen *BenchWriteGenerator) Generate() (*pagestore.PageID, *pagestore.PageD
 
 // BenchReadGenerator is used by multi read thread.
 type BenchReadGenerator struct {
+	notfound     bool
 	startVersion uint64
 	endVersion   uint64
 }
 
-func (rGen *BenchReadGenerator) Init(start, end uint64) {
+func (rGen *BenchReadGenerator) Init(notfound bool, start, end uint64) {
+	if rGen == nil {
+		return
+	}
+	rGen.notfound = notfound
 	rGen.startVersion = start
 	rGen.endVersion = end
 	rand.Seed(time.Now().UnixNano())
@@ -70,10 +75,20 @@ func (rGen *BenchReadGenerator) Generate() *pagestore.PageID {
 	if rGen == nil {
 		return nil
 	}
-	randomOffset := rand.Intn(int(rGen.endVersion - rGen.startVersion))
+	var (
+		randomOffset int
+		trieID       pagestore.Hash
+	)
+	randomOffset = rand.Intn(int(rGen.endVersion - rGen.startVersion))
+	if rGen.notfound {
+		trieID[0] = 'M'
+		trieID[1] = 'I'
+		trieID[2] = 'S'
+		trieID[3] = 'S'
+	}
 	return &pagestore.PageID{
 		Version: rGen.startVersion + uint64(randomOffset),
-		TrieID:  pagestore.Hash{},
+		TrieID:  trieID,
 		Path:    nil,
 	}
 }
