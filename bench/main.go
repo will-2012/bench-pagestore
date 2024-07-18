@@ -39,6 +39,10 @@ func main() {
 				Name:  "read",
 				Usage: "bench page store read",
 			},
+			&cli.BoolFlag{
+				Name:  "notfound",
+				Usage: "bench page store notfound read",
+			},
 			&cli.Uint64Flag{
 				Name:  "read-qps",
 				Usage: "bench page store read qps",
@@ -93,7 +97,7 @@ func benchMain(c *cli.Context) error {
 	if c.Bool("read") {
 		readQPSController := &utils.QPSController{}
 		readQPSController.Init(c.Uint64("read-qps"))
-		return benchRead(ch, pageStore, readQPSController, c.Uint64("read-start"), c.Uint64("read-end"))
+		return benchRead(ch, pageStore, c.Bool("notfound"), readQPSController, c.Uint64("read-start"), c.Uint64("read-end"))
 	}
 	if c.Bool("mix") {
 		wg := sync.WaitGroup{}
@@ -102,7 +106,7 @@ func benchMain(c *cli.Context) error {
 		go func() {
 			readQPSController := &utils.QPSController{}
 			readQPSController.Init(c.Uint64("read-qps"))
-			benchRead(ch, pageStore, readQPSController, c.Uint64("read-start"), c.Uint64("read-end"))
+			benchRead(ch, pageStore, c.Bool("notfound"), readQPSController, c.Uint64("read-start"), c.Uint64("read-end"))
 			wg.Done()
 		}()
 		go func() {
@@ -152,7 +156,7 @@ func benchWrite(ch chan os.Signal, pageStore *pagestore.PageStore, controller *u
 
 }
 
-func benchRead(ch chan os.Signal, pageStore *pagestore.PageStore, controller *utils.QPSController, start uint64, end uint64) error {
+func benchRead(ch chan os.Signal, pageStore *pagestore.PageStore, notfound bool, controller *utils.QPSController, start uint64, end uint64) error {
 	fmt.Println("Start bench read")
 
 	var (
@@ -165,6 +169,7 @@ func benchRead(ch chan os.Signal, pageStore *pagestore.PageStore, controller *ut
 		readWorkers[index] = &ReadWorker{
 			workIndex:     index,
 			pageStore:     pageStore,
+			notfound:      notfound,
 			qpsController: controller,
 			startVersion:  start,
 			endVersion:    end,
@@ -188,6 +193,7 @@ func benchRead(ch chan os.Signal, pageStore *pagestore.PageStore, controller *ut
 type ReadWorker struct {
 	workIndex     uint64
 	pageStore     *pagestore.PageStore
+	notfound      bool
 	qpsController *utils.QPSController
 	startVersion  uint64
 	endVersion    uint64
@@ -206,7 +212,7 @@ func (rWorker *ReadWorker) Start() {
 		curPageID  *pagestore.PageID
 	)
 	rGenerator = &utils.BenchReadGenerator{}
-	rGenerator.Init(rWorker.startVersion, rWorker.endVersion)
+	rGenerator.Init(rWorker.notfound, rWorker.startVersion, rWorker.endVersion)
 
 	go func() {
 		for {
@@ -220,8 +226,7 @@ func (rWorker *ReadWorker) Start() {
 				rWorker.qpsController.TakeToken()
 				curPageID = rGenerator.Generate()
 				if _, err = rWorker.pageStore.Get(curPageID); err != nil { // continue
-					fmt.Printf("Break loop due to get failed, error=%v\n", err)
-					fmt.Println("End bench read")
+					fmt.Printf("Break loop due to get failed, error=%v, key=%v\n", err, curPageID.TrieID)
 				}
 			}
 		}
