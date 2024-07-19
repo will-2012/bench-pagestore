@@ -79,6 +79,7 @@ func getDBOptsV1() *opt.Options {
 }
 
 // option v2 only has level0 and level1.
+// speedup read, due to search l0 is slow, and l1 is faster(binary search).
 func getDBOptsV2() *opt.Options {
 	dbOpts := &opt.Options{}
 
@@ -109,7 +110,10 @@ func getDBOptsV2() *opt.Options {
 	return dbOpts
 }
 
-// option v2 only has level0 and level1, reduce memtable size to 64MiB.
+// option v3 only has level0 and level1, reduce memtable size to 64MiB.
+// speedup read/write mix, reduce the side effects of flush l0.
+// It should be noted that this has a negative impact on the performance of reading recently written keys;
+// therefore, cache should be added at the upper layer.
 func getDBOptsV3() *opt.Options {
 	dbOpts := &opt.Options{}
 
